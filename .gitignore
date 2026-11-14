@@ -1,0 +1,25 @@
+# .gitignore - IonDomo Project
+# Criado pela IONKOD | Douglas Lúcio
+
+# Variáveis de ambiente e segredos
+.env
+.env.local
+.env.production
+*.pem
+*.key
+*.jks
+*.keystore
+secrets.xml
+local.properties
+
+# Builds e IDEs
+/build/
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Logs e dados sensíveis de debug
+*.log
+capture/
+*.hprof
