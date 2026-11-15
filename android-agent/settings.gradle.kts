@@ -1,7 +1,3 @@
-/**
- * IonDomo - Settings
- * Criado pela IONKOD | Fundador: Douglas Lúcio
- */
 pluginManagement {
     repositories {
         google()

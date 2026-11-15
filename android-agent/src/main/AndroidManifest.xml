@@ -1,34 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  IonDomo - AndroidManifest.xml
-  Criado pela IONKOD | Fundador: Douglas Lúcio
-  
-  SEGURANÇA: Princípio do Menor Privilégio.
-  Apenas permissões estritamente necessárias para telemetria e monitoramento.
-  Permissões sensíveis (UsageStats, NotificationListener) requerem concessão manual do usuário.
--->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- 1. Rede: Necessário para enviar telemetria criptografada ao backend -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-
-    <!-- 2. Persistência: Para o WorkManager reagendar tarefas após reboot -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-
-    <!-- 3. Monitoramento de Uso (UsageStatsManager): Requer concessão manual nas configurações -->
     <uses-permission
         android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
-
-    <!-- 4. Foreground Service (Opcional): Se precisarmos de um serviço persistente crítico -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <application
         android:allowBackup="false"
-        android:dataExtractionRules="@xml/data_extraction_rules"
-        android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="IonDomo Agent"
         android:roundIcon="@mipmap/ic_launcher_round"
@@ -36,7 +19,6 @@
         android:theme="@style/Theme.Material3.DayNight.NoActionBar"
         tools:targetApi="31">
         
-        <!-- Activity Principal (Dashboard de Configuração Inicial para o Responsável) -->
         <activity
             android:name=".MainActivity"
             android:exported="true">
