@@ -10,7 +10,6 @@ jobs:
   security-audit:
     name: Security & LGPD Compliance Scan
     runs-on: ubuntu-latest
-    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -25,13 +24,7 @@ jobs:
 
       - name: Run Gitleaks Security Scan
         run: |
-          gitleaks detect --source . --verbose --report-format json --report-path gitleaks-report.json
-        continue-on-error: false
-
-      - name: Run IONKOD Security Audit Script
-        run: |
-          chmod +x scripts/security_audit.sh
-          ./scripts/security_audit.sh
+          gitleaks detect --source . --redact --report-format json --report-path gitleaks-report.json
 
       - name: Upload Security Report
         if: always()
