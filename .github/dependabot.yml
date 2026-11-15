@@ -1,0 +1,30 @@
+version: 2
+updates:
+  # Backend Go
+  - package-ecosystem: "gomod"
+    directory: "/backend-api"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "go"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "ci/cd"
+
+  # Android Gradle (via GitHub Actions ou manual, mas dependabot suporta gradle)
+  - package-ecosystem: "gradle"
+    directory: "/android-agent"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "android"
