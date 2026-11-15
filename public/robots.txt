@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /internal/
+
+# Sitemap
+Sitemap: https://iondomo.ionkod.com/sitemap.xml
+
+# Security
+Disallow: /*.env$
+Disallow: /*.key$
+Disallow: /*.pem$

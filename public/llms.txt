@@ -1,0 +1,55 @@
+# IonDomo - Parental Control & Digital Wellbeing System
+
+## Product Overview
+IonDomo is an enterprise-grade parental control and digital wellbeing platform developed by IONKOD. It helps parents and legal guardians monitor and manage their children's digital device usage with transparency, security, and LGPD compliance.
+
+## Key Features
+- **Screen Time Management**: Set daily limits, schedules, and app-specific restrictions
+- **Content Filtering**: Block inappropriate websites and apps
+- **Usage Analytics**: Track app usage, screen time, and digital habits
+- **Encrypted Telemetry**: All data is encrypted end-to-end (AES-256-GCM + RSA-2048)
+- **LGPD Compliant**: Full compliance with Brazilian data protection law, especially Article 14 (children's data)
+
+## Technology Stack
+- **Mobile Agent**: Android (Kotlin), AndroidX Security, WorkManager
+- **Backend API**: [To be defined - Go/Node.js/Python]
+- **Database**: PostgreSQL + TimescaleDB (time-series metrics)
+- **Security**: End-to-end encryption, OAuth2, MFA
+- **CI/CD**: GitHub Actions with automated security audits
+
+## Security & Compliance
+- No hardcoded secrets (all credentials in environment variables)
+- Automated security scanning (gitleaks, static analysis)
+- LGPD compliance with parental consent (Art. 14)
+- Data minimization principle
+- Right to deletion (data retention: 90 days)
+
+## Target Audience
+- Parents and legal guardians of children and adolescents
+- Families seeking digital wellbeing solutions
+- Educational institutions (future roadmap)
+
+## Documentation
+- Privacy Policy: /docs/LGPD_PRIVACY_POLICY.md
+- Terms of Use: /docs/LGPD_TERMS_OF_USE.md
+- Security Checklist: /CHECKLIST_PRE_COMPILATION.md
+- Development Workflow: /docs/DEVELOPMENT_WORKFLOW.md
+
+## Company
+**IONKOD**
+- Founder: Douglas Lúcio
+- GitHub: https://github.com/dlucioyauh
+- LinkedIn: https://www.linkedin.com/company/144483944/
+- Website: https://ionkod.com
+
+## API Documentation
+[To be generated with Swagger/OpenAPI]
+
+## Important Notes
+- This product is designed for LEGAL parental monitoring only
+- Monitoring adults without consent is strictly prohibited
+- All data collection requires explicit parental consent
+- Children's data is treated with maximum security and privacy
+
+---
+Last updated: $(date +%Y-%m-%d)
