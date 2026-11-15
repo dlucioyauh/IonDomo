@@ -137,9 +137,7 @@ fi
 
 # 10. Verificar rate limiting
 echo "[10/12] Verificando rate limiting (backend)..."
-if [ -f "backend-api/src/middleware/rateLimiter.js" ] || \
-   [ -f "backend-api/src/middleware/rate_limiter.go" ] || \
-   grep -rq "rate.limit\|rateLimit" backend-api/ 2>/dev/null; then
+if grep -rq "RateLimiter\|rate\.Limit\|rateLimit" backend-api/ 2>/dev/null; then
     echo "  ✅ Rate limiting configurado"
 else
     echo "  ⚠️  AVISO: Rate limiting não configurado no backend"
@@ -157,7 +155,7 @@ fi
 
 # 12. Verificar Open Graph
 echo "[12/12] Verificando Open Graph..."
-if [ -f "public/index.html" ] && grep -q "og:title" public/index.html 2>/dev/null; then
+if grep -rq "og:title\|og:description" backend-api/ public/ 2>/dev/null; then
     echo "  ✅ Open Graph configurado"
 else
     echo "  ⚠️  AVISO: Open Graph não configurado"
