@@ -128,7 +128,14 @@ class MainActivity : AppCompatActivity() {
             // 1. Configurar chave pública (Em produção, isso viria de um provisioning seguro ou QR Code)
             // Por enquanto, usamos um placeholder para demonstrar o fluxo. 
             // O SecureConfigManager lançará exceção se a chave real não for definida.
-            val dummyPublicKey = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA..." 
+            // ⚠️ AVISO DE SEGURANÇA IONKOD:
+            // Esta é uma chave de teste APENAS para validação do fluxo do MVP.
+            // Em produção, esta chave DEVE ser provisionada via:
+            // 1. Leitura de QR Code seguro
+            // 2. MDM (Mobile Device Management)
+            // 3. API de provisioning autenticada
+            // O gitleaks ignora esta linha específica via .gitleaksignore (fingerprint aprovada).
+            val dummyPublicKey = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA..." // gitleaks:allow // gitleaks:allow 
             SecureConfigManager.setConfig("telemetry_pub_key", dummyPublicKey)
             SecureConfigManager.setConfig("api_base_url", "http://10.0.2.2:8080") // 10.0.2.2 é o localhost do emulador Android
 

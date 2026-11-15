@@ -40,7 +40,7 @@ fi
 
 # 3. Verificar comentários sensíveis
 echo "[3/12] Verificando comentários com dados sensíveis..."
-SENSITIVE_COMMENTS=$(grep -rnw . -E "(password|senha|api_key|secret|token).*=.*['\"].*['\"]" \
+SENSITIVE_COMMENTS=$(grep -rnwE "(password|senha|api_key|secret|token).*=.*['\"].*['\"]" \
     --include="*.kt" --include="*.kts" --include="*.java" --include="*.xml" \
     --exclude-dir=.git --exclude-dir=build 2>/dev/null || true)
 
@@ -54,7 +54,7 @@ fi
 
 # 4. Verificar senhas de teste
 echo "[4/12] Verificando senhas de teste em produção..."
-TEST_PASSWORDS=$(grep -rnw . -E "(admin123|password123|test123|123456)" \
+TEST_PASSWORDS=$(grep -rnwE "(admin123|password123|test123|123456)" \
     --include="*.kt" --include="*.kts" --include="*.java" --include="*.xml" \
     --exclude-dir=.git --exclude-dir=build 2>/dev/null || true)
 
