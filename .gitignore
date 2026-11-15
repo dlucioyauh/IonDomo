@@ -22,4 +22,6 @@ local.properties
 # Logs e dados sensíveis de debug
 *.log
 capture/
-*.hprof
+*.hprofgitleaks-report.json
+android-agent/.gradle/
+android-agent/build/
