@@ -1,6 +1,7 @@
 package middleware
 
 import (
+    "os"
     "time"
 
     "github.com/labstack/echo/v4"
@@ -10,7 +11,7 @@ import (
 
 func SetupLogger(env string) {
     if env == "development" {
-        log.Logger = log.Output(zerolog.ConsoleWriter{Out: zerolog.ConsoleTestWriter()})
+        log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: "15:04:05"})
         zerolog.SetGlobalLevel(zerolog.DebugLevel)
     } else {
         zerolog.SetGlobalLevel(zerolog.InfoLevel)
