@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Permitir HTTP apenas para o localhost do emulador Android e rede local (MVP Testing) -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">10.0.2.2</domain> <!-- Emulador Android -->
+        <domain includeSubdomains="true">localhost</domain>
+        <!-- Adicione o IP da sua máquina aqui se for testar em dispositivo físico, ex: 192.168.1.100 -->
+    </domain-config>
+</network-security-config>

@@ -27,11 +27,11 @@ jobs:
           cache: gradle
 
       - name: Grant execute permission for gradlew
-        run: chmod +x android-agent/gradlew
+        run: chmod +x gradlew
         working-directory: android-agent
 
       - name: Build with Gradle (Debug)
-        run: ./gradlew assembleDebug
+        run: ./gradlew assembleDebug --stacktrace
         working-directory: android-agent
 
       - name: Upload APK
