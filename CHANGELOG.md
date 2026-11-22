@@ -5,6 +5,31 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [0.3.0] - 2026-11-22
+
+### 🎨 Dashboard Web (Marco 2 Concluído)
+- ✅ Next.js 16.4.6 com App Router + Turbopack
+- ✅ Gráfico de barras (Recharts) com dados reais de telemetria
+- ✅ Endpoint `GET /api/v1/dashboard` no backend Go
+- ✅ Query SQL agregada: `SUM(duration_seconds) GROUP BY app_name`
+- ✅ Cards de resumo: Dispositivo, Apps Monitorados, Status
+- ✅ Testado end-to-end: Poco M5 → Go → TimescaleDB → Browser
+- ✅ Dados reais: Instagram 4h26m, WhatsApp 20min
+
+### 🔧 Backend Go (v0.3.0)
+- ✅ `pgxpool` para pool de conexões PostgreSQL
+- ✅ Handler `handleGetDashboard` com query otimizada
+- ✅ Logging estruturado com contagem de apps
+- ✅ Latência média: 7.9ms
+
+### 📊 Métricas Atualizadas
+- Commits: 15+
+- Endpoints API: 3 (health, telemetry, dashboard)
+- Camadas funcionais: 6 (coleta, transporte, API, DB, UI, CI/CD)
+- Dispositivos reais testados: Poco M5 (Android 14, MIUI)
+
+---
+
 ## [0.1.0] - 2026-11-22
 
 ### 🎉 Conquistas Épicas
