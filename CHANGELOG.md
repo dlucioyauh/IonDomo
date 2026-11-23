@@ -5,6 +5,20 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [0.4.0] - 2026-11-22
+
+### 🎮 Nova Visão: Discipulado Gamificado
+- ✅ Migration v0.4: tabelas `app_usage`, `parental_controls`, `bible_unlocks`, `devices`
+- ✅ Backend: coleta de TODOS os apps (batch) + endpoints de controle parental
+- ✅ Dashboard 3D gamificado (padrão Ionkod Premium) com toggles de bloqueio/limite
+- 🚧 Issues #7-#11 criadas: ranking XP, coros angelicais, classes bíblicas, desafios físicos, Bíblia Unlock
+- 🔧 Fix: removido import 'encoding/json' não usado (crash do backend)
+
+### 🎯 Reposicionamento do Produto
+IonDomo evolui de 'controle parental passivo' para 'plataforma de discipulado gamificado com controle parental ativo'.
+
+---
+
 ## [0.3.0] - 2026-11-22
 
 ### 🎨 Dashboard Web (Marco 2 Concluído)
