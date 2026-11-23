@@ -72,6 +72,8 @@ type DashboardApp struct {
 	IsBlocked       bool   `json:"is_blocked"`
 	DailyLimit      int    `json:"daily_limit_seconds"`
 	RequiresBible   bool   `json:"requires_bible_unlock"`
+	IsSystem        bool   `json:"is_system"`
+	Icon            string `json:"icon"`
 }
 
 func handleGetDashboard(c echo.Context) error {
@@ -83,30 +85,16 @@ func handleGetDashboard(c echo.Context) error {
 			SUM(a.duration_seconds) as total_duration,
 			COALESCE(p.is_blocked, FALSE) as is_blocked,
 			COALESCE(p.daily_limit_seconds, 0) as daily_limit,
-			COALESCE(p.requires_bible_unlock, FALSE) as requires_bible
+			COALESCE(p.requires_bible_unlock, FALSE) as requires_bible,
+			COALESCE(ac.is_system, FALSE) as is_system,
+			COALESCE(ac.icon_base64, '') as icon
 		FROM app_usage a
 		LEFT JOIN parental_controls p ON a.device_id = p.device_id AND a.app_name = p.app_name
+		LEFT JOIN app_catalog ac ON a.app_name = ac.app_name
 		WHERE a.date = CURRENT_DATE
-		AND a.app_name NOT LIKE 'com.android.%'
-		AND a.app_name NOT LIKE 'com.miui.%'
-		AND a.app_name NOT LIKE 'com.mi.android.%'
-		AND a.app_name NOT LIKE 'com.miuix.%'
-		AND a.app_name NOT LIKE 'com.qualcomm.%'
-		AND a.app_name NOT LIKE 'com.google.android.gms%'
-		AND a.app_name NOT LIKE 'com.google.android.gsf%'
-		AND a.app_name NOT LIKE 'com.google.android.providers%'
-		AND a.app_name NOT LIKE 'android%'
-		AND a.app_name NOT LIKE '%.settings%'
-		AND a.app_name NOT LIKE '%.permissioncontroller%'
-		AND a.app_name NOT LIKE '%.securitycenter%'
-		AND a.app_name NOT LIKE '%.cleaner%'
-		AND a.app_name NOT LIKE '%.fileexplorer%'
-		AND a.app_name NOT LIKE '%.vrrh%'
-		AND a.app_name NOT LIKE '%.framework%'
-		AND a.app_name NOT LIKE '%.launcher%'
-		GROUP BY a.app_name, p.is_blocked, p.daily_limit_seconds, p.requires_bible_unlock
+		GROUP BY a.app_name, p.is_blocked, p.daily_limit_seconds, p.requires_bible_unlock, ac.is_system, ac.icon_base64
 		ORDER BY total_duration DESC
-		LIMIT 20
+		LIMIT 50
 	`
 
 	rows, err := dbPool.Query(context.Background(), query)
@@ -120,9 +108,10 @@ func handleGetDashboard(c echo.Context) error {
 	totalTime := 0
 	for rows.Next() {
 		var app DashboardApp
-		if err := rows.Scan(&app.AppName, &app.DurationSeconds, &app.IsBlocked, &app.DailyLimit, &app.RequiresBible); err != nil {
+		if err := rows.Scan(&app.AppName, &app.DurationSeconds, &app.IsBlocked, &app.DailyLimit, &app.RequiresBible, &app.IsSystem, &app.Icon); err != nil {
 			continue
 		}
+		if app.IsSystem { continue } // filtro real do Android, não heurística
 		totalTime += app.DurationSeconds
 		apps = append(apps, app)
 	}
@@ -185,6 +174,38 @@ func handleSetLimit(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{"status": "updated"})
 }
 
+
+type CatalogApp struct {
+	AppName    string `json:"app_name"`
+	IsSystem   bool   `json:"is_system"`
+	IconBase64 string `json:"icon_base64"`
+}
+
+func handleAppCatalog(c echo.Context) error {
+	reqID := c.Response().Header().Get(echo.HeaderXRequestID)
+	var payload struct {
+		DeviceID string       `json:"device_id"`
+		Apps     []CatalogApp `json:"apps"`
+	}
+	if err := c.Bind(&payload); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid payload"})
+	}
+	saved := 0
+	for _, a := range payload.Apps {
+		_, err := dbPool.Exec(context.Background(),
+			`INSERT INTO app_catalog (app_name, is_system, icon_base64, updated_at)
+			 VALUES ($1, $2, $3, NOW())
+			 ON CONFLICT (app_name) DO UPDATE SET
+				is_system = EXCLUDED.is_system,
+				icon_base64 = EXCLUDED.icon_base64,
+				updated_at = NOW()`,
+			a.AppName, a.IsSystem, a.IconBase64)
+		if err == nil { saved++ }
+	}
+	log.Info().Str("request_id", reqID).Int("apps", saved).Msg("App catalog synced")
+	return c.JSON(http.StatusAccepted, map[string]int{"saved": saved})
+}
+
 func main() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: "15:04:05"})
@@ -218,6 +239,7 @@ func main() {
 	e.GET("/api/v1/dashboard", handleGetDashboard)
 	e.POST("/api/v1/control/block", handleToggleBlock)
 	e.POST("/api/v1/control/limit", handleSetLimit)
+	e.POST("/api/v1/app-catalog", handleAppCatalog)
 
 	go func() {
 		log.Info().Str("addr", "0.0.0.0:8080").Msg("IonDomo Backend started")

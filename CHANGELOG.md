@@ -5,6 +5,21 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [0.4.2] - 2026-11-22
+
+### 🖼️ Ícones reais + filtro preciso (v0.4.2)
+- ✅ Android: `AppIconCollector` extrai ícone real via PackageManager (base64, 72x72)
+- ✅ Android: flag `FLAG_SYSTEM` real (não heurística de string)
+- ✅ Backend: endpoint `POST /api/v1/app-catalog` (ícone = metadado, enviado 1x)
+- ✅ Backend: dashboard JOIN com app_catalog + filtro por is_system real
+- ✅ Frontend: renderiza `data:image/png;base64` + fallback elegante
+- 🚧 Issue #13 (ícones reais) e #14 (detecção de apps de risco: VPN/mods)
+
+### 💡 Insight de produto
+Vrrh (VPN) e W4b (WhatsApp mod) detectados → viram ALERTA de risco para pais (issue #14)
+
+---
+
 ## [0.4.1] - 2026-11-22
 
 ### 🎨 UX: Filtrar apps de sistema + Ícones reais

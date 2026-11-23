@@ -2,7 +2,6 @@ package com.ionkod.iondomo
 
 import android.app.Activity
 import android.app.AppOpsManager
-import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.Intent
 import android.os.Build
@@ -13,11 +12,13 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import android.view.Gravity
-import java.net.HttpURLConnection
-import java.net.URL
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.OneTimeWorkRequestBuilder
+import java.util.concurrent.TimeUnit
 
 class MainActivity : Activity() {
     
@@ -49,6 +50,7 @@ class MainActivity : Activity() {
         setContentView(layout)
 
         updateUI()
+        com.ionkod.iondomo.telemetry.AppIconCollector.collectAndSendOnce(this, "http://192.168.3.109:8080")
     }
 
     override fun onResume() {
@@ -58,8 +60,8 @@ class MainActivity : Activity() {
 
     private fun updateUI() {
         if (hasUsageStatsPermission()) {
-            statusText.text = "✅ Permissão Concedida\n\nPronto para coletar dados reais."
-            actionButton.text = "Coletar e Enviar Dados (24h)"
+            statusText.text = "✅ Permissão Concedida\n\nColeta automática em segundo plano ativa."
+            actionButton.text = "Forçar Envio Agora (Teste)"
         } else {
             statusText.text = "⚠️ Permissão Necessária\n\nO IonDomo precisa acessar estatísticas de uso."
             actionButton.text = "Conceder Permissão de Uso"
@@ -68,7 +70,7 @@ class MainActivity : Activity() {
 
     private fun handleAction() {
         if (hasUsageStatsPermission()) {
-            collectAndSendRealData()
+            forceImmediateSync()
         } else {
             requestUsageStatsPermission()
         }
@@ -99,65 +101,33 @@ class MainActivity : Activity() {
         startActivity(intent)
     }
 
-    private fun collectAndSendRealData() {
-        statusText.text = "⏳ Coletando dados de uso..."
+    private fun schedulePeriodicWork() {
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+
+        val telemetryRequest = PeriodicWorkRequestBuilder<com.ionkod.iondomo.telemetry.TelemetryWorker>(15, TimeUnit.MINUTES)
+            .setConstraints(constraints)
+            .build()
+
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "IonDomoTelemetryWork",
+            ExistingPeriodicWorkPolicy.UPDATE,
+            telemetryRequest
+        )
+    }
+
+    private fun forceImmediateSync() {
+        statusText.text = "⏳ Enviando dados agora..."
+        schedulePeriodicWork() // Garante que o agendamento periódico está ativo
         
-        Thread {
-            try {
-                val usageStatsManager = getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
-                val endTime = System.currentTimeMillis()
-                val startTime = endTime - (1000 * 60 * 60 * 24) // Últimas 24 horas
-
-                val stats = usageStatsManager.queryUsageStats(
-                    UsageStatsManager.INTERVAL_DAILY, 
-                    startTime, 
-                    endTime
-                )
-
-                var topApp = "unknown"
-                var maxTime = 0L
-
-                for (stat in stats) {
-                    if (stat.totalTimeInForeground > maxTime) {
-                        maxTime = stat.totalTimeInForeground
-                        topApp = stat.packageName
-                    }
-                }
-
-                val durationSeconds = (maxTime / 1000).toInt()
-                val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-                val deviceId = Build.SERIAL ?: android.provider.Settings.Secure.getString(contentResolver, android.provider.Settings.Secure.ANDROID_ID)
-
-                runOnUiThread {
-                    statusText.text = "⏳ Enviando para o backend..."
-                }
-
-                // Enviar para o backend com o JSON correto
-                val url = URL("http://192.168.3.109:8080/api/v1/telemetry")
-                val connection = url.openConnection() as HttpURLConnection
-                connection.requestMethod = "POST"
-                connection.doOutput = true
-                connection.setRequestProperty("Content-Type", "application/json")
-                
-                val jsonPayload = "{\"device_id\": \"$deviceId\", \"app_name\": \"$topApp\", \"duration_seconds\": $durationSeconds, \"date\": \"$currentDate\"}"
-                connection.outputStream.write(jsonPayload.toByteArray())
-                
-                val responseCode = connection.responseCode
-                
-                runOnUiThread {
-                    if (responseCode == 202) {
-                        statusText.text = "✅ SUCESSO!\n\nApp mais usado: $topApp\nTempo: ${durationSeconds}s\nEnviado ao backend."
-                        Toast.makeText(this, "Dados enviados com sucesso!", Toast.LENGTH_LONG).show()
-                    } else {
-                        statusText.text = "❌ Falha no Backend\n\nCódigo: $responseCode"
-                    }
-                }
-            } catch (e: Exception) {
-                runOnUiThread {
-                    statusText.text = "❌ ERRO\n\n${e.message}"
-                    Toast.makeText(this, "Erro: ${e.message}", Toast.LENGTH_LONG).show()
-                }
-            }
-        }.start()
+        // Dispara uma execução imediata para teste
+        val immediateRequest = OneTimeWorkRequestBuilder<com.ionkod.iondomo.telemetry.TelemetryWorker>().build()
+        WorkManager.getInstance(this).enqueue(immediateRequest)
+        
+        Toast.makeText(this, "Sincronização disparada. Verifique o backend em instantes.", Toast.LENGTH_LONG).show()
+        
+        // Restaura o texto após 3 segundos
+        statusText.postDelayed({ updateUI() }, 3000)
     }
 }

@@ -14,6 +14,8 @@ interface AppUsage {
   is_blocked: boolean;
   daily_limit_seconds: number;
   requires_bible_unlock: boolean;
+  is_system: boolean;
+  icon: string;
 }
 
 const formatDuration = (seconds: number) => {
@@ -29,9 +31,17 @@ const formatDuration = (seconds: number) => {
 };
 
 // Componente de ícone com fallback elegante
-function AppIcon({ pkg, size = 48 }: { pkg: string; size?: number }) {
+function AppIcon({ pkg, size = 48, realIcon }: { pkg: string; size?: number; realIcon?: string }) {
   const meta = getAppMeta(pkg);
   const [imgError, setImgError] = useState(false);
+  if (realIcon && !imgError) {
+    return (
+      <img src={`data:image/png;base64,${realIcon}`} alt={meta.name}
+        onError={() => setImgError(true)}
+        className="rounded-xl object-cover shadow-lg"
+        style={{ width: size, height: size }} />
+    );
+  }
   
   if (meta.iconUrl && !imgError) {
     return (
@@ -75,7 +85,7 @@ export default function Dashboard() {
       .then((result) => {
         if (result.status === "success") {
           // Filtro duplo: backend já filtra, mas garantimos aqui também
-          const filtered = (result.data || []).filter((a: AppUsage) => !isSystemApp(a.app_name));
+          const filtered = (result.data || []).filter((a: AppUsage) => !a.is_system && !isSystemApp(a.app_name));
           setData(filtered);
           setTotalTime(filtered.reduce((acc: number, curr: AppUsage) => acc + curr.duration_seconds, 0));
         }
@@ -312,7 +322,7 @@ function AppCard({ app, onClick }: { app: AppUsage; onClick: () => void }) {
     >
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
-          <AppIcon pkg={app.app_name} size={48} />
+          <AppIcon pkg={app.app_name} size={48} realIcon={app.icon} />
           <div>
             <p className="text-white font-bold">{meta.name}</p>
             <p className="text-xs text-slate-500 font-mono truncate max-w-[150px]">{app.app_name}</p>
@@ -361,7 +371,7 @@ function ConfigModal({ app, onClose, onToggleBlock, onSetLimit }: any) {
       >
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <AppIcon pkg={app.app_name} size={56} />
+            <AppIcon pkg={app.app_name} size={56} realIcon={app.icon} />
             <div>
               <h3 className="text-xl font-bold text-white">{meta.name}</h3>
               <p className="text-xs text-slate-400 font-mono">{app.app_name}</p>
