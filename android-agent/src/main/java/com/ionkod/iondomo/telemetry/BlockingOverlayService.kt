@@ -36,13 +36,31 @@ class BlockingOverlayService : Service() {
     private var cachedBlocked: List<String> = emptyList()
     private var lastRulesFetch = 0L
 
+    // >>> ANTI-PARADOXO: pacotes que NAO devem remover a overlay <<<
+    // Quando a overlay aparece, o Android considera o IonDomo ou o launcher como "top".
+    // Se removermos o overlay imediatamente, ele some e o app bloqueado volta.
+    private val IGNORE_PACKAGES = setOf(
+        "com.ionkod.iondomo",         // nosso proprio app
+        "com.miui.home",              // launcher MIUI (Poco/Xiaomi)
+        "com.android.launcher3",      // launcher padrao AOSP
+        "com.google.android.apps.nexuslauncher",  // launcher Pixel
+        "com.sec.android.app.launcher",           // launcher Samsung
+        "com.huawei.android.launcher",            // launcher Huawei
+        "com.oppo.launcher",                      // launcher Oppo/Realme
+        "com.android.systemui",       // barra de status/navegacao
+        "com.android.settings"        // config rapida (quando usuario puxa barra)
+    )
+
     companion object {
         private const val TAG = "IonDomo_Blocking"
         private const val CHANNEL_ID = "IonDomoBlockingChannel"
         private const val NOTIFICATION_ID = 1001
-        private const val CHECK_INTERVAL_MS = 1500L
+        private const val CHECK_INTERVAL_MS = 1000L
         private const val RULES_CACHE_MS = 10000L
+        private const val REMOVE_DELAY_MS = 3000L  // so remove apos 3s sem ver o app bloqueado
     }
+
+    private var lastBlockedSeenAt: Long = 0L  // ultima vez que vimos app bloqueado no topo
 
     override fun onCreate() {
         super.onCreate()
@@ -101,14 +119,40 @@ class BlockingOverlayService : Service() {
                 if (now - lastRulesFetch > RULES_CACHE_MS) {
                     cachedBlocked = fetchBlockedApps()
                     lastRulesFetch = now
-                    Log.i(TAG, "Rules updated: $cachedBlocked")
                 }
+
                 val top = getTopPackage()
-                if (top != null && cachedBlocked.contains(top)) {
-                    Log.w(TAG, "MATCH! Blocking: $top")
-                    showBlockingOverlay(top)
-                } else {
-                    removeOverlay()
+                val isBlocked = top != null && cachedBlocked.contains(top)
+                val isIgnored = top != null && IGNORE_PACKAGES.any { top.startsWith(it) || it == top }
+
+                when {
+                    isBlocked -> {
+                        // App bloqueado em foco: mostra overlay e atualiza timestamp
+                        lastBlockedSeenAt = now
+                        Log.d(TAG, "Top=$top -> BLOCKED (overlay ativa)")
+                        showBlockingOverlay(top!!)
+                    }
+                    isIgnored && overlayView != null -> {
+                        // Launcher/systemui/proprio app em foco: NAO remove ainda.
+                        // Aguarda timeout para confirmar que o usuario realmente saiu.
+                        val elapsed = now - lastBlockedSeenAt
+                        if (elapsed > REMOVE_DELAY_MS) {
+                            Log.i(TAG, "Top=$top (ignorado) + timeout $elapsed ms -> removendo overlay")
+                            removeOverlay()
+                            lastBlockedSeenAt = 0L
+                        } else {
+                            Log.d(TAG, "Top=$top (ignorado), overlay persiste ($elapsed/${REMOVE_DELAY_MS}ms)")
+                        }
+                    }
+                    top != null && overlayView != null -> {
+                        // App NAO bloqueado e NAO ignorado -> remove imediatamente
+                        Log.i(TAG, "Top=$top (liberado) -> removendo overlay")
+                        removeOverlay()
+                        lastBlockedSeenAt = 0L
+                    }
+                    else -> {
+                        // Nenhum app em foco ou overlay ja nao existe: nada a fazer
+                    }
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Evaluation failed", e)
@@ -150,7 +194,6 @@ class BlockingOverlayService : Service() {
     private fun showBlockingOverlay(packageName: String) {
         if (overlayView != null) return
 
-        // Construcao da view pode ser em background; addView NAO pode.
         val container = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
@@ -195,14 +238,13 @@ class BlockingOverlayService : Service() {
 
         overlayView = container
 
-        // >>> CORRECAO CRITICA: addView na MAIN THREAD <<<
         handler.post {
             try {
                 windowManager.addView(container, params)
-                Log.i(TAG, "Overlay ADDED on main thread.")
+                Log.i(TAG, "Overlay ADDED for $packageName")
                 showToast("Bloqueando: $packageName")
             } catch (e: Exception) {
-                Log.e(TAG, "addView failed on main thread", e)
+                Log.e(TAG, "addView failed", e)
                 overlayView = null
             }
         }
@@ -211,13 +253,11 @@ class BlockingOverlayService : Service() {
     private fun removeOverlay() {
         val v = overlayView ?: return
         overlayView = null
-        // >>> CORRECAO CRITICA: removeView na MAIN THREAD <<<
         handler.post {
             try {
                 windowManager.removeView(v)
-                Log.i(TAG, "Overlay removed on main thread.")
-            } catch (e: Exception) {
-            }
+                Log.i(TAG, "Overlay removed.")
+            } catch (e: Exception) {}
         }
     }
 }
