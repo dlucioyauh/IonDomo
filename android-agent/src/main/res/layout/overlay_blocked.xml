@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#CC000000"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="32dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="🛡️"
+        android:textSize="64sp"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView
+        android:id="@+id/tv_blocked_message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Este app está bloqueado."
+        android:textColor="#FFFFFF"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:layout_marginBottom="32dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="O tempo de uso foi atingido ou o app foi bloqueado pelos responsáveis."
+        android:textColor="#CCCCCC"
+        android:textSize="16sp"
+        android:gravity="center"/>
+
+</LinearLayout>

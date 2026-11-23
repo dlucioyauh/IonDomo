@@ -84,23 +84,33 @@ function resolveAppName(app: AppUsage): string {
 export default function Dashboard() {
   const [data, setData] = useState<AppUsage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [totalTime, setTotalTime] = useState(0);
   const [selectedApp, setSelectedApp] = useState<AppUsage | null>(null);
   const [search, setSearch] = useState("");
 
   const loadData = () => {
     fetch("http://192.168.3.109:8080/api/v1/dashboard")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error(`Backend retornou HTTP ${res.status}`);
+        return res.json();
+      })
       .then((result) => {
         if (result.status === "success") {
-          // Filtro duplo: backend já filtra, mas garantimos aqui também
           const filtered = (result.data || []).filter((a: AppUsage) => !a.is_system && !isSystemApp(a.app_name));
           setData(filtered);
           setTotalTime(filtered.reduce((acc: number, curr: AppUsage) => acc + curr.duration_seconds, 0));
+          setError(null);
+        } else {
+          setError(result.error || "Resposta inválida do backend");
         }
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch((err) => {
+        console.error("Erro ao buscar dados:", err);
+        setError(err.message || "Backend indisponível");
+        setLoading(false);
+      });
   };
 
   useEffect(() => { loadData(); }, []);
@@ -183,6 +193,13 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/30 text-red-300 px-5 py-4 rounded-2xl flex items-center gap-3">
+            <Ban className="w-5 h-5" />
+            <span className="text-sm font-medium">Falha ao carregar dados: {error}. Verifique se o backend está rodando (porta 8080).</span>
+          </div>
+        )}
 
         {/* Stats 3D Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -335,20 +352,28 @@ function AppCard({ app, onClick }: { app: AppUsage; onClick: () => void }) {
       onClick={onClick}
       className="group cursor-pointer relative overflow-hidden rounded-2xl bg-slate-900/60 backdrop-blur-xl border border-slate-800 p-5 shadow-xl hover:shadow-2xl hover:-translate-y-1 hover:border-violet-500/50 transition-all duration-300"
     >
-      <div className="flex items-center justify-between mb-3">
+      {/* BADGE ÚNICO DE RISCO */}
+      {app.risk_level !== "safe" && (
+        <div 
+          title={app.risk_reasons}
+          className="absolute top-3 right-3 z-20 flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold border shadow-md"
+          style={{
+            backgroundColor: app.risk_level === "high" ? "rgba(239,68,68,0.15)" : "rgba(245,158,11,0.15)",
+            borderColor: app.risk_level === "high" ? "rgba(239,68,68,0.4)" : "rgba(245,158,11,0.4)",
+            color: app.risk_level === "high" ? "#F87171" : "#FBBF24",
+          }}
+        >
+          <Shield className="w-3 h-3" />
+          {app.risk_level === "high" ? "Risco" : "Atenção"}
+        </div>
+      )}
+      <div className="relative flex items-center justify-between mb-3">
+        {/* Badge Atenção/Risco fica no topo direito */}
+        
+
         <div className="flex items-center gap-3">
           <AppIcon pkg={app.app_name} size={48} realIcon={app.icon} />
-          {app.risk_level !== "safe" && (
-            <div title={app.risk_reasons} className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold border"
-              style={{
-                backgroundColor: app.risk_level === "high" ? "rgba(239,68,68,0.15)" : "rgba(245,158,11,0.15)",
-                borderColor: app.risk_level === "high" ? "rgba(239,68,68,0.4)" : "rgba(245,158,11,0.4)",
-                color: app.risk_level === "high" ? "#F87171" : "#FBBF24",
-              }}>
-              <Shield className="w-3 h-3" />
-              {app.risk_level === "high" ? "Risco" : "Atenção"}
-            </div>
-          )}
+          
           <div>
             <p className="text-white font-bold">{resolveAppName(app)}</p>
             <p className="text-xs text-slate-500 font-mono truncate max-w-[150px]">{app.app_name}</p>

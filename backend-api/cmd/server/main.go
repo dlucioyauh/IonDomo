@@ -158,7 +158,7 @@ func handleGetDashboard(c echo.Context) error {
 	query := `
 		SELECT
 			a.app_name,
-			SUM(a.duration_seconds) as total_duration,
+			MAX(a.duration_seconds) as total_duration,
 			COALESCE(p.is_blocked, FALSE) as is_blocked,
 			COALESCE(p.daily_limit_seconds, 0) as daily_limit,
 			COALESCE(p.requires_bible_unlock, FALSE) as requires_bible,
@@ -170,7 +170,7 @@ func handleGetDashboard(c echo.Context) error {
 		FROM app_usage a
 		LEFT JOIN parental_controls p ON a.device_id = p.device_id AND a.app_name = p.app_name
 		LEFT JOIN app_catalog ac ON a.app_name = ac.app_name
-		WHERE a.date = CURRENT_DATE
+		WHERE a.date = CURRENT_DATE AND a.app_name != 'com.ionkod.iondomo'
 		GROUP BY a.app_name, p.is_blocked, p.daily_limit_seconds, p.requires_bible_unlock,
 				 ac.is_system, ac.icon_base64, ac.label, ac.risk_level, ac.risk_reasons
 		ORDER BY total_duration DESC
@@ -248,6 +248,54 @@ func handleSetLimit(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{"status": "updated"})
 }
 
+
+type DeviceRules struct {
+	BlockedApps []string          `json:"blocked_apps"`
+	Limits      map[string]int    `json:"limits"` // app_name -> seconds
+}
+
+func handleGetRules(c echo.Context) error {
+	deviceID := c.QueryParam("device_id")
+	if deviceID == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "device_id required"})
+	}
+
+	query := `
+		SELECT app_name, is_blocked, daily_limit_seconds 
+		FROM parental_controls 
+		WHERE device_id = $1 AND (is_blocked = TRUE OR daily_limit_seconds > 0)
+	`
+	rows, err := dbPool.Query(context.Background(), query, deviceID)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to fetch rules")
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Database error"})
+	}
+	defer rows.Close()
+
+	rules := DeviceRules{
+		BlockedApps: []string{},
+		Limits:      make(map[string]int),
+	}
+
+	for rows.Next() {
+		var appName string
+		var isBlocked bool
+		var limit int
+		if err := rows.Scan(&appName, &isBlocked, &limit); err != nil {
+			continue
+		}
+		if isBlocked {
+			rules.BlockedApps = append(rules.BlockedApps, appName)
+		}
+		if limit > 0 {
+			rules.Limits[appName] = limit
+		}
+	}
+
+	log.Info().Str("device", deviceID).Int("blocked", len(rules.BlockedApps)).Msg("Rules fetched")
+	return c.JSON(http.StatusOK, rules)
+}
+
 func main() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: "15:04:05"})
@@ -282,6 +330,7 @@ func main() {
 	e.POST("/api/v1/app-catalog", handleAppCatalog)
 	e.POST("/api/v1/control/block", handleToggleBlock)
 	e.POST("/api/v1/control/limit", handleSetLimit)
+	e.GET("/api/v1/rules", handleGetRules)
 
 	go func() {
 		log.Info().Str("addr", "0.0.0.0:8080").Msg("IonDomo Backend started")
