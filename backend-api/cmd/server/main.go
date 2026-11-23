@@ -74,6 +74,7 @@ type DashboardApp struct {
 	RequiresBible   bool   `json:"requires_bible_unlock"`
 	IsSystem        bool   `json:"is_system"`
 	Icon            string `json:"icon"`
+	Label           string `json:"label"`
 }
 
 func handleGetDashboard(c echo.Context) error {
@@ -87,12 +88,13 @@ func handleGetDashboard(c echo.Context) error {
 			COALESCE(p.daily_limit_seconds, 0) as daily_limit,
 			COALESCE(p.requires_bible_unlock, FALSE) as requires_bible,
 			COALESCE(ac.is_system, FALSE) as is_system,
-			COALESCE(ac.icon_base64, '') as icon
+			COALESCE(ac.icon_base64, '') as icon,
+			COALESCE(ac.label, '') as label
 		FROM app_usage a
 		LEFT JOIN parental_controls p ON a.device_id = p.device_id AND a.app_name = p.app_name
 		LEFT JOIN app_catalog ac ON a.app_name = ac.app_name
 		WHERE a.date = CURRENT_DATE
-		GROUP BY a.app_name, p.is_blocked, p.daily_limit_seconds, p.requires_bible_unlock, ac.is_system, ac.icon_base64
+		GROUP BY a.app_name, p.is_blocked, p.daily_limit_seconds, p.requires_bible_unlock, ac.is_system, ac.icon_base64, ac.label
 		ORDER BY total_duration DESC
 		LIMIT 50
 	`
@@ -108,7 +110,7 @@ func handleGetDashboard(c echo.Context) error {
 	totalTime := 0
 	for rows.Next() {
 		var app DashboardApp
-		if err := rows.Scan(&app.AppName, &app.DurationSeconds, &app.IsBlocked, &app.DailyLimit, &app.RequiresBible, &app.IsSystem, &app.Icon); err != nil {
+		if err := rows.Scan(&app.AppName, &app.DurationSeconds, &app.IsBlocked, &app.DailyLimit, &app.RequiresBible, &app.IsSystem, &app.Icon, &app.Label); err != nil {
 			continue
 		}
 		if app.IsSystem { continue } // filtro real do Android, não heurística
@@ -177,6 +179,7 @@ func handleSetLimit(c echo.Context) error {
 
 type CatalogApp struct {
 	AppName    string `json:"app_name"`
+	Label      string `json:"label"`
 	IsSystem   bool   `json:"is_system"`
 	IconBase64 string `json:"icon_base64"`
 }
@@ -193,13 +196,14 @@ func handleAppCatalog(c echo.Context) error {
 	saved := 0
 	for _, a := range payload.Apps {
 		_, err := dbPool.Exec(context.Background(),
-			`INSERT INTO app_catalog (app_name, is_system, icon_base64, updated_at)
-			 VALUES ($1, $2, $3, NOW())
+			`INSERT INTO app_catalog (app_name, label, is_system, icon_base64, updated_at)
+			 VALUES ($1, $2, $3, $4, NOW())
 			 ON CONFLICT (app_name) DO UPDATE SET
+				label = EXCLUDED.label,
 				is_system = EXCLUDED.is_system,
 				icon_base64 = EXCLUDED.icon_base64,
 				updated_at = NOW()`,
-			a.AppName, a.IsSystem, a.IconBase64)
+			a.AppName, a.Label, a.IsSystem, a.IconBase64)
 		if err == nil { saved++ }
 	}
 	log.Info().Str("request_id", reqID).Int("apps", saved).Msg("App catalog synced")

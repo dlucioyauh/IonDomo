@@ -16,6 +16,7 @@ interface AppUsage {
   requires_bible_unlock: boolean;
   is_system: boolean;
   icon: string;
+  label: string;
 }
 
 const formatDuration = (seconds: number) => {
@@ -70,6 +71,12 @@ function AppIcon({ pkg, size = 48, realIcon }: { pkg: string; size?: number; rea
       {meta.name.charAt(0)}
     </div>
   );
+}
+
+// Nome real: prioriza label do dispositivo (Android), depois catálogo, depois heurística
+function resolveAppName(app: AppUsage): string {
+  if (app.label && app.label.trim().length > 0) return app.label.trim();
+  return getAppMeta(app.app_name).name;
 }
 
 export default function Dashboard() {
@@ -228,7 +235,10 @@ export default function Dashboard() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                 <XAxis 
                   dataKey="app_name" 
-                  tickFormatter={(v) => getAppMeta(v).name}
+                  tickFormatter={(v) => {
+                    const found = filteredData.find(d => d.app_name === v);
+                    return found ? resolveAppName(found) : getAppMeta(v).name;
+                  }}
                   angle={-30} 
                   textAnchor="end" 
                   height={70} 
@@ -251,7 +261,10 @@ export default function Dashboard() {
                     boxShadow: "0 20px 40px rgba(0,0,0,0.5)"
                   }}
                   formatter={(v: number) => [formatDuration(v), "Tempo de Uso"]}
-                  labelFormatter={(l) => getAppMeta(String(l)).name}
+                  labelFormatter={(l) => {
+                    const found = filteredData.find(d => d.app_name === String(l));
+                    return found ? resolveAppName(found) : getAppMeta(String(l)).name;
+                  }}
                 />
                 <Bar dataKey="duration_seconds" radius={[8, 8, 0, 0]} barSize={45}>
                   {filteredData.map((entry, index) => (
@@ -373,7 +386,7 @@ function ConfigModal({ app, onClose, onToggleBlock, onSetLimit }: any) {
           <div className="flex items-center gap-3">
             <AppIcon pkg={app.app_name} size={56} realIcon={app.icon} />
             <div>
-              <h3 className="text-xl font-bold text-white">{meta.name}</h3>
+              <h3 className="text-xl font-bold text-white">{resolveAppName(app)}</h3>
               <p className="text-xs text-slate-400 font-mono">{app.app_name}</p>
             </div>
           </div>

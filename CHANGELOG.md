@@ -5,6 +5,17 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [0.4.5] - 2026-11-22
+
+### 🏷️ Nomes reais dos apps + filtro de system completo
+- ✅ Android: `getApplicationLabel()` (PayPal, Santo Amaro, WhatsApp, VPN-Vrrh)
+- ✅ Android: `FLAG_UPDATED_SYSTEM_APP` (Account/Google/Photos/Dialer agora filtrados)
+- ✅ Backend: coluna `label` em app_catalog + JOIN no dashboard
+- ✅ Frontend: `resolveAppName()` com prioridade label > catálogo > heurística
+- 🚧 Issue #17 registrada
+
+---
+
 ## [0.4.4] - 2026-11-22
 
 ### 🐛 Fix raiz: NetworkOnMainThreadException (thread)
