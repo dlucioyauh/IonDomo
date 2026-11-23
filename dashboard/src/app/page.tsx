@@ -17,6 +17,8 @@ interface AppUsage {
   is_system: boolean;
   icon: string;
   label: string;
+  risk_level: string;
+  risk_reasons: string;
 }
 
 const formatDuration = (seconds: number) => {
@@ -336,8 +338,19 @@ function AppCard({ app, onClick }: { app: AppUsage; onClick: () => void }) {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
           <AppIcon pkg={app.app_name} size={48} realIcon={app.icon} />
+          {app.risk_level !== "safe" && (
+            <div title={app.risk_reasons} className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold border"
+              style={{
+                backgroundColor: app.risk_level === "high" ? "rgba(239,68,68,0.15)" : "rgba(245,158,11,0.15)",
+                borderColor: app.risk_level === "high" ? "rgba(239,68,68,0.4)" : "rgba(245,158,11,0.4)",
+                color: app.risk_level === "high" ? "#F87171" : "#FBBF24",
+              }}>
+              <Shield className="w-3 h-3" />
+              {app.risk_level === "high" ? "Risco" : "Atenção"}
+            </div>
+          )}
           <div>
-            <p className="text-white font-bold">{meta.name}</p>
+            <p className="text-white font-bold">{resolveAppName(app)}</p>
             <p className="text-xs text-slate-500 font-mono truncate max-w-[150px]">{app.app_name}</p>
           </div>
         </div>
