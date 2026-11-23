@@ -5,6 +5,17 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [0.4.4] - 2026-11-22
+
+### 🐛 Fix raiz: NetworkOnMainThreadException (thread)
+- ✅ AppIconCollector: envio movido para background Thread (causa real do catálogo vazio)
+- ✅ Logging `IonDomo_Catalog` (apps/system/icon/bytes/response)
+- ✅ Reset flag v3 + outputStream.use
+- 🚧 Issue #16 registrada
+- 💡 Lição: e.printStackTrace() engolia erro -> Log.e com tag
+
+---
+
 ## [0.4.3] - 2026-11-22
 
 ### 🐛 Fix crítico: Package Visibility (Android 11+)
