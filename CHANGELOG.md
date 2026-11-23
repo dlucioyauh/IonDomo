@@ -5,6 +5,25 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [0.4.1] - 2026-11-22
+
+### 🎨 UX: Filtrar apps de sistema + Ícones reais
+- ✅ Backend: query com NOT LIKE para pacotes MIUI/Android/Google internos
+- ✅ Frontend: `isSystemApp()` como filtro duplo (defesa em profundidade)
+- ✅ Catálogo `appCatalog.ts` com ícones do Google Play (Instagram, WhatsApp, YouTube, TikTok, ChatGPT, Discord, Roblox, Minecraft, Netflix, Spotify, etc.)
+- ✅ Fallback elegante com inicial colorida + cor determinística
+- ✅ Barra de busca por nome de app
+- ✅ LGPD: minimização de dados (apps de sistema removidos)
+
+### 🎮 Roadmap de Gamificação (Issues #7-#11)
+- #7 XP + ranking mundial anonimizado
+- #8 9 Coros Angelicais (patentes)
+- #9 Classes de Personagens Bíblicos
+- #10 Desafios de Treino Físico (LGPD Art.11)
+- #11 Bíblia Unlock (motor de conteúdo + quiz)
+
+---
+
 ## [0.4.0] - 2026-11-22
 
 ### 🎮 Nova Visão: Discipulado Gamificado
