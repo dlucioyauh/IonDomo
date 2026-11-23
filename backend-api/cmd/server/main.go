@@ -231,6 +231,7 @@ func main() {
 	e.Use(middleware.RequestID())
 	e.Use(middleware.Logger())
 	e.Use(middleware.CORS())
+	e.Use(middleware.BodyLimit("2M"))
 
 	e.GET("/health", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]string{"status": "healthy"})

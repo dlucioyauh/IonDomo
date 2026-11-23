@@ -17,7 +17,7 @@ import java.net.URL
 object AppIconCollector {
 
     private const val PREFS = "iondomo_catalog"
-    private const val SENT_KEY = "catalog_sent_v1"
+    private const val SENT_KEY = "catalog_sent_v2"
 
     data class AppInfo(val pkg: String, val isSystem: Boolean, val iconB64: String)
 
@@ -54,8 +54,8 @@ object AppIconCollector {
             conn.requestMethod = "POST"
             conn.doOutput = true
             conn.setRequestProperty("Content-Type", "application/json")
-            conn.connectTimeout = 15000
-            conn.readTimeout = 15000
+            conn.connectTimeout = 30000
+            conn.readTimeout = 30000
             conn.outputStream.write(payload.toString().toByteArray())
             if (conn.responseCode == 202) {
                 prefs.edit().putBoolean(SENT_KEY, true).apply()

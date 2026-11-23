@@ -5,6 +5,16 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [0.4.3] - 2026-11-22
+
+### 🐛 Fix crítico: Package Visibility (Android 11+)
+- ✅ `QUERY_ALL_PACKAGES` adicionada (causa raiz: só 2 apps visíveis)
+- ✅ Reset flag catálogo (v2) + timeout 30s + BodyLimit 2M
+- 🚧 Issue #15 registrada
+- 💡 Insight: Vrrh=VPN (risco #14), Account/Packageinstaller=system
+
+---
+
 ## [0.4.2] - 2026-11-22
 
 ### 🖼️ Ícones reais + filtro preciso (v0.4.2)
